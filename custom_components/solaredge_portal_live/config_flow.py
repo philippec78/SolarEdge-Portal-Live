@@ -1,16 +1,27 @@
 """Set up the integration with the credentials of a SolarEdge account."""
 
+from __future__ import annotations
+
 import re
 
 import voluptuous as vol
 
 from homeassistant import config_entries
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
+from homeassistant.core import callback
 from homeassistant.helpers import selector
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .api import LoginRequired, PortalClient, PortalError, SiteAccessDenied
-from .const import CONF_POLL_INTERVAL, CONF_REFRESH_TOKEN, CONF_SITE_ID, DEFAULT_POLL_INTERVAL, DOMAIN
+from .const import (
+    CONF_NIGHT_POLL_MINUTES,
+    CONF_POLL_INTERVAL,
+    CONF_REFRESH_TOKEN,
+    CONF_SITE_ID,
+    DEFAULT_NIGHT_POLL_MINUTES,
+    DEFAULT_POLL_INTERVAL,
+    DOMAIN,
+)
 
 _INTERVAL = selector.NumberSelector(
     selector.NumberSelectorConfig(min=15, max=120, step=1, mode=selector.NumberSelectorMode.BOX)
@@ -22,6 +33,11 @@ class PortalConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Validate the account and site before creating an entry."""
 
     VERSION = 1
+
+    @staticmethod
+    @callback
+    def async_get_options_flow(config_entry: config_entries.ConfigEntry) -> PortalOptionsFlow:
+        return PortalOptionsFlow()
 
     async def async_step_user(self, user_input=None):
         return await self._credentials("user", user_input)
@@ -91,4 +107,32 @@ class PortalConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             )] = _INTERVAL
         return self.async_show_form(
             step_id=step, data_schema=vol.Schema(fields), errors=errors,
+        )
+
+
+class PortalOptionsFlow(config_entries.OptionsFlowWithReload):
+    """Save the nighttime cadence without signing in again."""
+
+    async def async_step_init(self, user_input=None):
+        current = self.config_entry.options
+        interval = current.get(CONF_NIGHT_POLL_MINUTES, DEFAULT_NIGHT_POLL_MINUTES)
+        errors = {}
+        if user_input is not None:
+            interval = user_input[CONF_NIGHT_POLL_MINUTES]
+            if 1 <= interval <= 120 and interval % 1 == 0:
+                return self.async_create_entry(
+                    title="", data={**current, CONF_NIGHT_POLL_MINUTES: int(interval)}
+                )
+            errors[CONF_NIGHT_POLL_MINUTES] = "invalid_night_interval"
+
+        return self.async_show_form(
+            step_id="init",
+            data_schema=vol.Schema({
+                vol.Required(CONF_NIGHT_POLL_MINUTES, default=interval): selector.NumberSelector(
+                    selector.NumberSelectorConfig(
+                        min=1, max=120, step=1, mode=selector.NumberSelectorMode.BOX
+                    )
+                ),
+            }),
+            errors=errors,
         )

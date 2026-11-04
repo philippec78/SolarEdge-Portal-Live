@@ -35,6 +35,19 @@
       "reconfigure_successful": "Les réglages SolarEdge ont été mis à jour."
     }
   },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Lectures de nuit",
+        "data": {
+          "night_poll_minutes": "Intervalle de lecture de nuit en minutes"
+        }
+      }
+    },
+    "error": {
+      "invalid_night_interval": "Choisis un nombre entier de 1 à 120 minutes."
+    }
+  },
   "entity": {
     "sensor": {
       "grid": {"name": "Puissance réseau"},

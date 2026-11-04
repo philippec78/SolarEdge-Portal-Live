@@ -35,6 +35,19 @@
       "reconfigure_successful": "SolarEdge settings were updated."
     }
   },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Nighttime polling",
+        "data": {
+          "night_poll_minutes": "Nighttime polling interval in minutes"
+        }
+      }
+    },
+    "error": {
+      "invalid_night_interval": "Choose a whole number from 1 to 120 minutes."
+    }
+  },
   "entity": {
     "sensor": {
       "grid": {"name": "Grid power"},

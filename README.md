@@ -12,7 +12,7 @@ Home Assistant 2026.8.2 ou ultérieur et HACS doivent être installés.
 4. Dans **Paramètres → Appareils et services → Ajouter une intégration**, sélectionne **SolarEdge Portal Live**.
 5. Saisis l’adresse e-mail et le mot de passe de ton compte SolarEdge, puis l’identifiant du site visible dans l’adresse du tableau de bord après `siteId=`. L’intervalle de lecture est de 30 secondes par défaut et se règle entre 15 et 120 secondes.
 
-Entre le lever et le coucher du soleil, l’intégration utilise l’intervalle configuré. La nuit, elle interroge SolarEdge toutes les 15 minutes et reprend la cadence de jour au lever du soleil. Les horaires suivent la localisation configurée dans Home Assistant.
+Entre le lever et le coucher du soleil, l’intégration utilise l’intervalle de jour configuré. La nuit, elle interroge SolarEdge toutes les 15 minutes par défaut. Pour changer cet intervalle, ouvre **Paramètres → Appareils et services → SolarEdge Portal Live → Configurer** et choisis une valeur de 1 à 120 minutes. Home Assistant recharge l’intégration en enregistrant ce réglage. Les horaires de lever et de coucher suivent la localisation configurée dans Home Assistant.
 
 ## Entités
 

@@ -18,12 +18,19 @@ from homeassistant.helpers.sun import get_astral_event_next
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .api import LoginRequired, PortalClient, PortalError, TemporaryError
-from .const import CONF_POLL_INTERVAL, CONF_REFRESH_TOKEN, CONF_SITE_ID, DEFAULT_POLL_INTERVAL, DOMAIN
+from .const import (
+    CONF_NIGHT_POLL_MINUTES,
+    CONF_POLL_INTERVAL,
+    CONF_REFRESH_TOKEN,
+    CONF_SITE_ID,
+    DEFAULT_NIGHT_POLL_MINUTES,
+    DEFAULT_POLL_INTERVAL,
+    DOMAIN,
+)
 from .readings import Readings, parse_readings
 
 _LOGGER = logging.getLogger(__name__)
 _PLATFORMS = [Platform.SENSOR]
-_NIGHT_INTERVAL = timedelta(minutes=15)
 
 
 class PortalCoordinator(DataUpdateCoordinator[Readings]):
@@ -32,6 +39,9 @@ class PortalCoordinator(DataUpdateCoordinator[Readings]):
     def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
         self._day_interval = timedelta(
             seconds=entry.data.get(CONF_POLL_INTERVAL, DEFAULT_POLL_INTERVAL)
+        )
+        self._night_interval = timedelta(
+            minutes=entry.options.get(CONF_NIGHT_POLL_MINUTES, DEFAULT_NIGHT_POLL_MINUTES)
         )
         super().__init__(
             hass, _LOGGER, name=DOMAIN, config_entry=entry,
@@ -52,7 +62,7 @@ class PortalCoordinator(DataUpdateCoordinator[Readings]):
         except ValueError:
             return self._day_interval
 
-        interval = self._day_interval if sunset < sunrise else _NIGHT_INTERVAL
+        interval = self._day_interval if sunset < sunrise else self._night_interval
         # The coordinator can round down by a fraction of a second.
         after_transition = min(sunrise, sunset) - now + timedelta(seconds=1)
         return min(interval, after_transition)
