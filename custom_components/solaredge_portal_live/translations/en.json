@@ -18,8 +18,7 @@
         "title": "Configure SolarEdge Portal Live",
         "data": {
           "username": "SolarEdge email",
-          "password": "SolarEdge password",
-          "poll_interval": "Polling interval in seconds"
+          "password": "SolarEdge password"
         }
       }
     },
@@ -38,13 +37,15 @@
   "options": {
     "step": {
       "init": {
-        "title": "Nighttime polling",
+        "title": "Polling intervals",
         "data": {
+          "poll_interval": "Daytime polling interval in seconds",
           "night_poll_minutes": "Nighttime polling interval in minutes"
         }
       }
     },
     "error": {
+      "invalid_interval": "Choose a whole number from 15 to 120 seconds.",
       "invalid_night_interval": "Choose a whole number from 1 to 120 minutes."
     }
   },

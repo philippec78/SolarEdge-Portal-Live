@@ -38,7 +38,9 @@ class PortalCoordinator(DataUpdateCoordinator[Readings]):
 
     def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
         self._day_interval = timedelta(
-            seconds=entry.data.get(CONF_POLL_INTERVAL, DEFAULT_POLL_INTERVAL)
+            seconds=entry.options.get(
+                CONF_POLL_INTERVAL, entry.data.get(CONF_POLL_INTERVAL, DEFAULT_POLL_INTERVAL)
+            )
         )
         self._night_interval = timedelta(
             minutes=entry.options.get(CONF_NIGHT_POLL_MINUTES, DEFAULT_NIGHT_POLL_MINUTES)

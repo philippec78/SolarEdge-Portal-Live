@@ -18,8 +18,7 @@
         "title": "Configurer SolarEdge Portal Live",
         "data": {
           "username": "Adresse e-mail SolarEdge",
-          "password": "Mot de passe SolarEdge",
-          "poll_interval": "Intervalle de lecture en secondes"
+          "password": "Mot de passe SolarEdge"
         }
       }
     },
@@ -38,13 +37,15 @@
   "options": {
     "step": {
       "init": {
-        "title": "Lectures de nuit",
+        "title": "Intervalles de lecture",
         "data": {
+          "poll_interval": "Intervalle de lecture de jour en secondes",
           "night_poll_minutes": "Intervalle de lecture de nuit en minutes"
         }
       }
     },
     "error": {
+      "invalid_interval": "Choisis un nombre entier de 15 à 120 secondes.",
       "invalid_night_interval": "Choisis un nombre entier de 1 à 120 minutes."
     }
   },

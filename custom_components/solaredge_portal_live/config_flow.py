@@ -23,8 +23,11 @@ from .const import (
     DOMAIN,
 )
 
-_INTERVAL = selector.NumberSelector(
+_DAY_INTERVAL = selector.NumberSelector(
     selector.NumberSelectorConfig(min=15, max=120, step=1, mode=selector.NumberSelectorMode.BOX)
+)
+_NIGHT_INTERVAL = selector.NumberSelector(
+    selector.NumberSelectorConfig(min=1, max=120, step=1, mode=selector.NumberSelectorMode.BOX)
 )
 _PASSWORD = selector.TextSelector(selector.TextSelectorConfig(type=selector.TextSelectorType.PASSWORD))
 
@@ -101,38 +104,45 @@ class PortalConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                   vol.Required(CONF_PASSWORD): _PASSWORD}
         if not entry:
             fields[vol.Required(CONF_SITE_ID)] = str
-        if step != "reauth_confirm":
-            fields[vol.Required(
-                CONF_POLL_INTERVAL, default=current.get(CONF_POLL_INTERVAL, DEFAULT_POLL_INTERVAL)
-            )] = _INTERVAL
+            fields[vol.Required(CONF_POLL_INTERVAL, default=DEFAULT_POLL_INTERVAL)] = _DAY_INTERVAL
         return self.async_show_form(
             step_id=step, data_schema=vol.Schema(fields), errors=errors,
         )
 
 
 class PortalOptionsFlow(config_entries.OptionsFlowWithReload):
-    """Save the nighttime cadence without signing in again."""
+    """Save the day and night polling intervals."""
 
     async def async_step_init(self, user_input=None):
-        current = self.config_entry.options
-        interval = current.get(CONF_NIGHT_POLL_MINUTES, DEFAULT_NIGHT_POLL_MINUTES)
+        entry = self.config_entry
+        current = entry.options
+        day = current.get(
+            CONF_POLL_INTERVAL, entry.data.get(CONF_POLL_INTERVAL, DEFAULT_POLL_INTERVAL)
+        )
+        night = current.get(CONF_NIGHT_POLL_MINUTES, DEFAULT_NIGHT_POLL_MINUTES)
         errors = {}
         if user_input is not None:
-            interval = user_input[CONF_NIGHT_POLL_MINUTES]
-            if 1 <= interval <= 120 and interval % 1 == 0:
+            day = user_input[CONF_POLL_INTERVAL]
+            night = user_input[CONF_NIGHT_POLL_MINUTES]
+            if not 15 <= day <= 120 or day % 1:
+                errors[CONF_POLL_INTERVAL] = "invalid_interval"
+            if not 1 <= night <= 120 or night % 1:
+                errors[CONF_NIGHT_POLL_MINUTES] = "invalid_night_interval"
+            if not errors:
                 return self.async_create_entry(
-                    title="", data={**current, CONF_NIGHT_POLL_MINUTES: int(interval)}
+                    title="",
+                    data={
+                        **current,
+                        CONF_POLL_INTERVAL: int(day),
+                        CONF_NIGHT_POLL_MINUTES: int(night),
+                    },
                 )
-            errors[CONF_NIGHT_POLL_MINUTES] = "invalid_night_interval"
 
         return self.async_show_form(
             step_id="init",
             data_schema=vol.Schema({
-                vol.Required(CONF_NIGHT_POLL_MINUTES, default=interval): selector.NumberSelector(
-                    selector.NumberSelectorConfig(
-                        min=1, max=120, step=1, mode=selector.NumberSelectorMode.BOX
-                    )
-                ),
+                vol.Required(CONF_POLL_INTERVAL, default=day): _DAY_INTERVAL,
+                vol.Required(CONF_NIGHT_POLL_MINUTES, default=night): _NIGHT_INTERVAL,
             }),
             errors=errors,
         )
