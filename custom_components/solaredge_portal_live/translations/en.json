@@ -1,0 +1,48 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect to SolarEdge",
+        "data": {
+          "username": "SolarEdge email",
+          "password": "SolarEdge password",
+          "site_id": "Site ID",
+          "poll_interval": "Polling interval in seconds"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Reconnect SolarEdge",
+        "data": {"username": "SolarEdge email", "password": "SolarEdge password"}
+      },
+      "reconfigure": {
+        "title": "Configure SolarEdge Portal Live",
+        "data": {
+          "username": "SolarEdge email",
+          "password": "SolarEdge password",
+          "poll_interval": "Polling interval in seconds"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "SolarEdge rejected the sign-in or requires interactive verification.",
+      "invalid_site": "This site is invalid or unavailable to the account.",
+      "invalid_interval": "Choose a whole number from 15 to 120 seconds.",
+      "cannot_connect": "SolarEdge did not return a usable response. Try again later."
+    },
+    "abort": {
+      "already_configured": "This site is already configured.",
+      "reauth_successful": "SolarEdge was reconnected.",
+      "reconfigure_successful": "SolarEdge settings were updated."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "grid": {"name": "Grid power"},
+      "imported": {"name": "Grid import power"},
+      "exported": {"name": "Grid export power"},
+      "production": {"name": "Solar power"},
+      "consumption": {"name": "Site consumption power"},
+      "timestamp": {"name": "Last measurement"}
+    }
+  }
+}

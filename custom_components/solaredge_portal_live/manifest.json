@@ -1,0 +1,13 @@
+{
+  "domain": "solaredge_portal_live",
+  "name": "SolarEdge Portal Live",
+  "codeowners": [
+    "@philippec78"
+  ],
+  "config_flow": true,
+  "documentation": "https://github.com/philippec78/SolarEdge-Portal-Live",
+  "integration_type": "hub",
+  "iot_class": "cloud_polling",
+  "issue_tracker": "https://github.com/philippec78/SolarEdge-Portal-Live/issues",
+  "version": "0.1.1"
+}

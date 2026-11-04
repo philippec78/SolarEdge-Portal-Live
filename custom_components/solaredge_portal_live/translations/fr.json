@@ -1,0 +1,48 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connexion à SolarEdge",
+        "data": {
+          "username": "Adresse e-mail SolarEdge",
+          "password": "Mot de passe SolarEdge",
+          "site_id": "Identifiant du site",
+          "poll_interval": "Intervalle de lecture en secondes"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Reconnecter SolarEdge",
+        "data": {"username": "Adresse e-mail SolarEdge", "password": "Mot de passe SolarEdge"}
+      },
+      "reconfigure": {
+        "title": "Configurer SolarEdge Portal Live",
+        "data": {
+          "username": "Adresse e-mail SolarEdge",
+          "password": "Mot de passe SolarEdge",
+          "poll_interval": "Intervalle de lecture en secondes"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "SolarEdge a refusé la connexion ou demande une validation interactive.",
+      "invalid_site": "Ce site est invalide ou inaccessible depuis ce compte.",
+      "invalid_interval": "Choisis un nombre entier de 15 à 120 secondes.",
+      "cannot_connect": "SolarEdge n’a pas renvoyé de réponse exploitable. Réessaie plus tard."
+    },
+    "abort": {
+      "already_configured": "Ce site est déjà configuré.",
+      "reauth_successful": "SolarEdge a été reconnecté.",
+      "reconfigure_successful": "Les réglages SolarEdge ont été mis à jour."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "grid": {"name": "Puissance réseau"},
+      "imported": {"name": "Puissance importée"},
+      "exported": {"name": "Puissance injectée"},
+      "production": {"name": "Puissance solaire"},
+      "consumption": {"name": "Puissance consommée"},
+      "timestamp": {"name": "Dernier relevé"}
+    }
+  }
+}
