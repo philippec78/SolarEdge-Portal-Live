@@ -1,13 +1,20 @@
 """Home Assistant integration for live SolarEdge portal measurements."""
 
-from datetime import timedelta
+from datetime import UTC, datetime, timedelta
 import logging
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_PASSWORD, CONF_USERNAME, Platform
+from homeassistant.const import (
+    CONF_PASSWORD,
+    CONF_USERNAME,
+    SUN_EVENT_SUNRISE,
+    SUN_EVENT_SUNSET,
+    Platform,
+)
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.helpers.sun import get_astral_event_next
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .api import LoginRequired, PortalClient, PortalError, TemporaryError
@@ -16,17 +23,19 @@ from .readings import Readings, parse_readings
 
 _LOGGER = logging.getLogger(__name__)
 _PLATFORMS = [Platform.SENSOR]
+_NIGHT_INTERVAL = timedelta(minutes=15)
 
 
 class PortalCoordinator(DataUpdateCoordinator[Readings]):
     """Poll once for all entities and persist refresh token changes."""
 
     def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
+        self._day_interval = timedelta(
+            seconds=entry.data.get(CONF_POLL_INTERVAL, DEFAULT_POLL_INTERVAL)
+        )
         super().__init__(
             hass, _LOGGER, name=DOMAIN, config_entry=entry,
-            update_interval=timedelta(
-                seconds=entry.data.get(CONF_POLL_INTERVAL, DEFAULT_POLL_INTERVAL)
-            ),
+            update_interval=self._day_interval,
             always_update=False,
         )
         self._entry = entry
@@ -35,6 +44,19 @@ class PortalCoordinator(DataUpdateCoordinator[Readings]):
             entry.data[CONF_PASSWORD], entry.data[CONF_SITE_ID], entry.data.get(CONF_REFRESH_TOKEN),
         )
 
+    def _next_poll_interval(self) -> timedelta:
+        now = datetime.now(UTC)
+        try:
+            sunrise = get_astral_event_next(self.hass, SUN_EVENT_SUNRISE, now)
+            sunset = get_astral_event_next(self.hass, SUN_EVENT_SUNSET, now)
+        except ValueError:
+            return self._day_interval
+
+        interval = self._day_interval if sunset < sunrise else _NIGHT_INTERVAL
+        # The coordinator can round down by a fraction of a second.
+        after_transition = min(sunrise, sunset) - now + timedelta(seconds=1)
+        return min(interval, after_transition)
+
     async def _async_update_data(self) -> Readings:
         original_data = self._entry.data
         try:
@@ -42,10 +64,12 @@ class PortalCoordinator(DataUpdateCoordinator[Readings]):
         except LoginRequired as err:
             raise ConfigEntryAuthFailed(str(err)) from None
         except TemporaryError as err:
-            raise UpdateFailed(str(err), retry_after=err.retry_after) from None
+            retry_after = max(err.retry_after, self._next_poll_interval().total_seconds())
+            raise UpdateFailed(str(err), retry_after=retry_after) from None
         except PortalError as err:
             raise UpdateFailed(str(err)) from None
         finally:
+            self.update_interval = self._next_poll_interval()
             token = self._client.refresh_token
             if self._entry.data is original_data and token != original_data.get(CONF_REFRESH_TOKEN):
                 data = dict(original_data)
