@@ -27,10 +27,11 @@ from .const import (
     DEFAULT_POLL_INTERVAL,
     DOMAIN,
 )
-from .readings import Readings, parse_readings
+from .readings import MAX_SAMPLE_AGE, Readings, parse_readings
 
 _LOGGER = logging.getLogger(__name__)
 _PLATFORMS = [Platform.SENSOR]
+_MIN_NIGHT_SAMPLE_AGE = timedelta(minutes=5)
 
 
 class PortalCoordinator(DataUpdateCoordinator[Readings]):
@@ -56,32 +57,43 @@ class PortalCoordinator(DataUpdateCoordinator[Readings]):
             entry.data[CONF_PASSWORD], entry.data[CONF_SITE_ID], entry.data.get(CONF_REFRESH_TOKEN),
         )
 
-    def _next_poll_interval(self) -> timedelta:
+    def _poll_timing(self) -> tuple[timedelta, float]:
+        """Choose the cadence and sample age limit for the current solar period."""
         now = datetime.now(UTC)
         try:
             sunrise = get_astral_event_next(self.hass, SUN_EVENT_SUNRISE, now)
             sunset = get_astral_event_next(self.hass, SUN_EVENT_SUNSET, now)
         except ValueError:
-            return self._day_interval
+            return self._day_interval, MAX_SAMPLE_AGE
 
-        interval = self._day_interval if sunset < sunrise else self._night_interval
+        daytime = sunset < sunrise
+        interval = self._day_interval if daytime else self._night_interval
+        max_age = MAX_SAMPLE_AGE
+        if not daytime:
+            max_age = max(
+                _MIN_NIGHT_SAMPLE_AGE.total_seconds(),
+                self._night_interval.total_seconds() + MAX_SAMPLE_AGE,
+            )
         # The coordinator can round down by a fraction of a second.
         after_transition = min(sunrise, sunset) - now + timedelta(seconds=1)
-        return min(interval, after_transition)
+        return min(interval, after_transition), max_age
 
     async def _async_update_data(self) -> Readings:
         original_data = self._entry.data
         try:
-            return parse_readings(await self._client.power_flow())
+            data = await self._client.power_flow()
+            _, max_age = self._poll_timing()
+            return parse_readings(data, max_age_seconds=max_age)
         except LoginRequired as err:
             raise ConfigEntryAuthFailed(str(err)) from None
         except TemporaryError as err:
-            retry_after = max(err.retry_after, self._next_poll_interval().total_seconds())
+            interval, _ = self._poll_timing()
+            retry_after = max(err.retry_after, interval.total_seconds())
             raise UpdateFailed(str(err), retry_after=retry_after) from None
         except PortalError as err:
             raise UpdateFailed(str(err)) from None
         finally:
-            self.update_interval = self._next_poll_interval()
+            self.update_interval, _ = self._poll_timing()
             token = self._client.refresh_token
             if self._entry.data is original_data and token != original_data.get(CONF_REFRESH_TOKEN):
                 data = dict(original_data)

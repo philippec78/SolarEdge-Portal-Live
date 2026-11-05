@@ -33,7 +33,12 @@ def _watts(component: dict) -> float | None:
     return round(watts, 3) if math.isfinite(watts) else None
 
 
-def parse_readings(data: dict, now: datetime | None = None) -> Readings:
+def parse_readings(
+    data: dict,
+    now: datetime | None = None,
+    *,
+    max_age_seconds: float = MAX_SAMPLE_AGE,
+) -> Readings:
     """Keep the source timestamp even when the power has become stale."""
     try:
         timestamp = datetime.fromisoformat(data["lastUpdateTime"])
@@ -44,7 +49,7 @@ def parse_readings(data: dict, now: datetime | None = None) -> Readings:
     age = ((now or datetime.now(UTC)) - timestamp).total_seconds()
     if not (
         data.get("isRealTime") is True and data.get("isCommunicating") is True
-        and -30 <= age <= MAX_SAMPLE_AGE
+        and -30 <= age <= max_age_seconds
     ):
         return Readings(timestamp)
 

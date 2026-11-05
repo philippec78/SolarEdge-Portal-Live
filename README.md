@@ -25,7 +25,7 @@ Entre le lever et le coucher du soleil, l’intégration utilise l’intervalle 
 | Puissance consommée | Consommation instantanée du site en watts |
 | Dernier relevé | Horodatage fourni par SolarEdge |
 
-Les capteurs de puissance deviennent indisponibles si la lecture échoue, si SolarEdge signale que le direct est indisponible ou si le relevé a plus de deux minutes.
+Les capteurs de puissance deviennent indisponibles si la lecture échoue ou si SolarEdge signale que le direct ou la communication est indisponible. Le jour, la mesure doit dater de deux minutes au maximum. La nuit, sa limite d’âge correspond à l’intervalle de nuit plus deux minutes, avec un minimum de cinq minutes. Par exemple, un intervalle de nuit de deux minutes accepte une mesure vieille de cinq minutes au maximum, et un intervalle de quinze minutes une mesure vieille de dix-sept minutes au maximum. Au lever du soleil, la limite de deux minutes s’applique à nouveau. Le capteur Dernier relevé conserve l’horodatage fourni par SolarEdge.
 
 ## Connexion SolarEdge
 
