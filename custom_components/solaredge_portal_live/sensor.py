@@ -44,5 +44,13 @@ class PortalSensor(CoordinatorEntity[PortalCoordinator], SensorEntity):
         return getattr(self.coordinator.data, self._key)
 
     @property
+    def extra_state_attributes(self):
+        data = self.coordinator.data
+        return {
+            "source_status": data.source_status,
+            "source_timestamp": data.timestamp.isoformat() if data.timestamp else None,
+        }
+
+    @property
     def available(self) -> bool:
         return super().available and self.native_value is not None
